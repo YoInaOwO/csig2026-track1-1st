@@ -1,0 +1,28 @@
+exp_tag: pair1b
+pretrained_ckpt_path_gen: /workspace/ODTSR/experiments/pair1/20260917-202028/checkpoints/net_gen_iter_251.pth
+pretrained_ckpt_path_dis: /workspace/ODTSR/experiments/pair1/20260917-202028/checkpoints/net_dis_iter_251.pth
+learning_rate: !!float 2e-5
+learning_rate_dis: !!float 5e-6
+accumulate_grad_batches: 4
+max_epochs: 1
+use_gradient_checkpointing: True
+viz_iters: 25
+save_ckpt_iters: 250
+relaxed_mean_size: 100
+use_dual_condition_flag: False
+rgb_w: 0.1
+lpips_w: 1.0
+dists_w: 1.0
+ssim_w: 1.0
+nr_w: 1.5
+nr_metrics: clipiqa,musiq,maniqa
+nr_scales: 1.0,0.5
+gan_type: vanilla
+gan_loss_weight: 0.05
+real_label_val: 1.0
+fake_label_val: 0.0
+d_iters: 1
+r1_regularization: 5.0
+r2_regularization: 0.0
+variance: 0.005
+lq_no_noise_prob: 0.7

@@ -1,0 +1,41 @@
+scale: 1
+color_jitter_prob: 0.0
+gray_prob: 0.0
+
+# 第一阶段：强模糊 + 明显降采样（比赛 LQ 主要特征），噪声很少
+resize_prob: [0.0, 0.9, 0.1]      # up, down, keep
+resize_range: [0.15, 0.6]         # 相当于 1.7~6.7 倍降采样
+gaussian_noise_prob: 0.15
+noise_range: [1, 4]
+poisson_scale_range: [0.02, 0.3]
+gray_noise_prob: 0.2
+jpeg_range: [85, 100]
+
+# 第二阶段：轻微
+second_blur_prob: 0.3
+resize_prob2: [0.1, 0.4, 0.5]
+resize_range2: [0.6, 1.2]
+gaussian_noise_prob2: 0.1
+noise_range2: [1, 3]
+poisson_scale_range2: [0.02, 0.2]
+gray_noise_prob2: 0.2
+jpeg_range2: [88, 100]
+
+kernel_info:
+    blur_kernel_size: 21
+    kernel_list: ['iso', 'aniso', 'generalized_iso', 'generalized_aniso', 'plateau_iso', 'plateau_aniso']
+    kernel_prob: [0.5, 0.25, 0.1, 0.03, 0.09, 0.03]
+    sinc_prob: 0.0
+    blur_sigma: [0.8, 4.5]
+    betag_range: [0.5, 4]
+    betap_range: [1, 2]
+
+    blur_kernel_size2: 21
+    kernel_list2: ['iso', 'aniso', 'generalized_iso', 'generalized_aniso', 'plateau_iso', 'plateau_aniso']
+    kernel_prob2: [0.5, 0.25, 0.1, 0.03, 0.09, 0.03]
+    sinc_prob2: 0.0
+    blur_sigma2: [0.3, 1.5]
+    betag_range2: [0.5, 4]
+    betap_range2: [1, 2]
+
+    final_sinc_prob: 0.0
