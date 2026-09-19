@@ -179,13 +179,34 @@ python 04_synthetic_val/eval2.py <输出目录> --tag <结果名> --val_dir <验
 
 ### 3.3 训练数据（`05_training/`）
 
-- 抓图：`unsplash_fetch*.py`（Unsplash Lite 元数据筛关键词）、`pexels_fetch.py`、`wiki_fetch.py`，按测试集类别配比（中文招牌 30% / 鸟 20% / 植物 18% / 钟表 15% / 花 7% / 灯光 6% / 建筑 4%）。`clip_filter.py` 用 CLIP 剔除不对题的图。
-- `make_tiles.py` + `build_list.py`：切 1024 块、按配比组 40000 块的清单，供阶段一的在线退化训练。
-- `make_pairs.py`：按 `calib.json` 离线造 (GT, LQ) 配对块，清单每行 `gt路径|lq路径`。GT 先软化，LQ 用 5 组参数轮转 + 抖动，JPEG q∈[75, 90]。供阶段二。
+官方只提供 5 对验证图，没有训练集。所有训练用的高质量图都是我们自己收集的公开图片，LQ 全部按 3.1 节标定的退化合成。**官方 5 对验证图没有进入训练**（`build_list.py` 里有把它们混进清单的开关，最终训练清单没有开启）。
+
+**图片来源**（都要求原图短边 ≥ 3000 px，保证切块后仍是原生分辨率而不是上采样）：
+
+| 来源 | 脚本 | 获取方式 | 主要贡献类别 |
+|---|---|---|---|
+| [Unsplash Lite Dataset](https://github.com/unsplash/datasets) | `unsplash_fetch.py` / `unsplash_fetch2.py` | 从官方发布的 `photos.tsv` / `keywords.tsv` 元数据按关键词筛选，再下载原图 | 鸟、植物、花、钟表、夜景灯光、街头招牌 |
+| [Pexels](https://www.pexels.com/api/) | `pexels_fetch.py` | 官方 API 按类别关键词搜索下载（需自备 API key，脚本从 `/workspace/.pexels_key` 读取） | 鸟、钟表、植物、中文招牌 |
+| [Wikimedia Commons](https://commons.wikimedia.org/) | `wiki_fetch.py` | MediaWiki API 按分类抓取，如 "Signs in Chinese"、"Neon signs in Hong Kong"、"Clock faces"、"Quality images of birds" | 中文招牌（真实高分辨率中文文字的主要来源）、钟表 |
+| [UHD-IQA](https://database.mmsp-kn.de/uhd-iqa-benchmark-database.html) | `make_tiles.py uhd` | 6073 张 3840 宽的真实照片（源自 Pixabay，CC0），用附带的 Amazon Rekognition 内容标签和 MOS 分筛类别与质量 | 植物、花、鸟、夜景 |
+
+类别配比参照测试集 100 张的人工统计（中文文字 31 / 鸟 21 / 植物 17 / 钟表 15 / 花 5 / 其他 11），目标权重：中文招牌 30% / 鸟 20% / 植物 18% / 钟表 15% / 花 7% / 灯光 6% / 建筑 4%。
+
+**处理流程**：
+
+- `make_tiles.py`：切 768 块，按 Laplacian 方差和高频能量占比过滤模糊/平坦块（阈值参照官方 GT 的块级分布）。
+- `clip_filter.py`：CPU 上用 CLIP 给每块打"主体是否存在"的分，剔除只有背景的块（如鸟类查询里的纯树枝、钟表查询里的纯墙面）。
+- `build_list.py`：按上述配比抽 40000 块组成阶段一清单，供在线退化训练。
+- `make_pairs.py`：阶段二用。从 Unsplash / Pexels 原图（排除留给合成验证集的 holdout 图）随机裁 1024 块，GT 先按 k 软化，LQ 按 `calib.json` 的 5 组参数轮转 + 抖动 + 空间变化对比度场，JPEG q∈[75, 90]。清单每行 `gt路径|lq路径`。实际生成 7799 对，来自 3921 张源图、7 个类别。
 
 ```
-python 05_training/make_pairs.py 2 600      # 每张源图 2 块，每类最多 600 张源图
+python 05_training/make_tiles.py tile <源目录> <类别> <输出目录>
+python 05_training/clip_filter.py bird 0.35
+python 05_training/build_list.py 40000 0 1          # 40000 块，不混官方验证对，启用 CLIP 过滤
+python 05_training/make_pairs.py 2 600              # 每张源图 2 块，每类最多 600 张源图
 ```
+
+早期提交 3 用的微调模型（`01_early_submissions/run_train.sh`）数据不同：DF2K + LSDIR + LSVT + 第一批 Unsplash，约 4.2 万张，其中 73% 是 2K 以下上采样到 4K 的，类别也不对题。这是那一轮效果差的原因之一，后来全部弃用。
 
 ### 3.4 训练
 
