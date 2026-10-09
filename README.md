@@ -1,4 +1,4 @@
-# 2026 "Camera 学术之星" CSIG 图像图形技术挑战赛 · 赛道一：生成式图像增强可控性挑战
+# 2026 "Camera 学术之星" CSIG 图像图形技术挑战赛 · 赛道一：生成式图像增强可控性挑战 初赛第一名
 
 比赛页面：<https://tianchi.aliyun.com/competition/entrance/532499>
 
